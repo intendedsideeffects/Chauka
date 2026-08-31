@@ -2,7 +2,7 @@
 
 *Chauka* is an interactive data story blending sea-level rise data with storytelling from Manus Island, Papua New Guinea.
 
-Built with **Next.js, React and Three.js**, it combines 3D mapping, data visualization and sound to create a layered way of engaging with climate data.
+Built with **Next.js, React and Three.js**, data visualization, local storytelling and sound to create a layered way of engaging with climate data.
 
 The project was created in collaboration with **Bertha Ngahan** (Storytelling) from Manus Island for the **Pacific Dataviz Challenge**.
 
