@@ -1,0 +1,411 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow-x: hidden; /* Prevent horizontal scroll */
+}
+
+body {
+  color: var(--foreground);
+  background: white;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Charts paint their own marks; the SVG canvas itself stays transparent so
+   the story background and the dots show through. */
+svg,
+.recharts-surface,
+.recharts-wrapper,
+.recharts-responsive-container {
+  background: none !important;
+  fill: none !important;
+}
+
+/* The story is a light design. Without an explicit background the page
+   inherited the browser's dark canvas on machines set to dark mode, which is
+   one reason it looked completely different on other computers. */
+html,
+body {
+  background: #ffffff;
+  color-scheme: light;
+}
+
+#__next,
+main {
+  background: none;
+}
+/* ------------------------------------------------------------------
+   Responsive scene stage (hero)
+
+   The artwork (scene.png, 6000x3375 = 16:9) and the ocean video share one
+   box so that anything placed on top of them - the bird button, the speech
+   bubble - can be positioned in PERCENT of the artwork instead of in pixels.
+   That way the buttons stay on the bird and on the canoe at every window
+   size and zoom level.
+
+   .scene-stage is the visible window, .scene-box is the artwork itself:
+   "cover" (fills the window, crops the sides) on wide screens,
+   "contain" (whole artwork visible) on narrow/portrait screens.
+   ------------------------------------------------------------------ */
+.scene-stage {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  container-type: size;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.scene-box {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  /* cover: the larger of "fill the width" and "fill the height" */
+  width: max(100cqw, calc(100cqh * 16 / 9));
+  height: max(100cqh, calc(100cqw * 9 / 16));
+}
+
+/* Portrait phones: a 16:9 crop would either cut the bird off or shrink the
+   whole scene to a stamp. Instead the artwork is drawn wider than the screen
+   and anchored to the left, so the bird (20% from the left) and the main
+   canoe (55%) are both in frame, and it sits on the bottom edge so the ocean
+   fills the lower part of the screen. */
+@media (orientation: portrait) and (max-width: 900px) {
+  .scene-box {
+    width: max(100cqw, 160cqw);
+    height: max(calc(100cqw * 9 / 16), calc(160cqw * 9 / 16));
+    top: auto;
+    bottom: 0;
+    left: 0;
+    transform: none;
+  }
+}
+
+/* Anything sitting on the artwork: positioned in % of .scene-box */
+.scene-hotspot {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+}
+
+/* Fluid type + spacing helpers used across the story sections */
+@media (max-width: 900px) {
+  .hide-on-narrow { display: none !important; }
+}
+
+/* Full-height helpers.
+   The duplicated declaration is intentional: browsers that don't know dvh
+   keep the vh value, newer ones use dvh so mobile browser chrome (the URL
+   bar) doesn't cut off the bottom of a section. */
+.scroll-root {
+  height: 100vh;
+  height: 100dvh;
+}
+
+.full-section {
+  height: 100vh;
+  height: 100dvh;
+}
+
+/* ------------------------------------------------------------------
+   Chart scaling
+
+   The charts were hand-built with fixed pixel geometry (a 350px plot area,
+   fixed bar widths). Rather than rewrite that maths, the whole chart block is
+   scaled down on short or narrow screens, so a section still fits on the
+   screen at 125% zoom or on a laptop with a short window.
+
+   Height and width contribute separate factors that multiply, so a window
+   that is both short and narrow gets both.
+   ------------------------------------------------------------------ */
+.chart-scaler {
+  --chart-scale-h: 1;
+  --chart-scale-w: 1;
+  width: 100%;
+  /* zoom, not transform: zoom shrinks the box in the layout as well, so the
+     caption below follows the chart instead of needing a hand-tuned negative
+     margin that only fits one chart height. Browsers without zoom simply show
+     the chart at full size. */
+  zoom: calc(var(--chart-scale-h) * var(--chart-scale-w));
+}
+
+@media (max-height: 860px) {
+  .chart-scaler { --chart-scale-h: 0.88; }
+}
+
+@media (max-height: 760px) {
+  .chart-scaler { --chart-scale-h: 0.78; }
+}
+
+@media (max-height: 660px) {
+  .chart-scaler { --chart-scale-h: 0.68; }
+}
+
+@media (max-width: 900px) {
+  .chart-scaler { --chart-scale-w: 0.94; }
+}
+
+@media (max-width: 600px) {
+  .chart-scaler { --chart-scale-w: 0.88; }
+}
+
+/* ------------------------------------------------------------------
+   Title section
+   ------------------------------------------------------------------ */
+.title-section {
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: #ffffff;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(1rem, 3vw, 3rem);
+  padding: clamp(2rem, 6vh, 4rem) clamp(1.25rem, 4vw, 4rem);
+  position: relative;
+  scroll-snap-align: start;
+  overflow: hidden;
+}
+
+.title-text {
+  flex: 0 1 32%;
+  min-width: min(300px, 100%);
+  color: #000;
+  font-family: 'Helvetica World', Arial, sans-serif;
+  z-index: 2;
+}
+
+.title-main {
+  font-size: clamp(3rem, 8vw, 8rem);
+  font-weight: normal;
+  line-height: 1;
+  margin: 0;
+}
+
+.title-sub {
+  font-size: clamp(1.3rem, 3.2vw, 3.2rem);
+  font-weight: bold;
+  font-family: 'Times New Roman', serif;
+  font-style: italic;
+  line-height: 1.05;
+  margin: 0.1rem 0 clamp(1.5rem, 4vh, 4rem);
+}
+
+.title-body {
+  font-size: clamp(0.95rem, 1.25vw, 1.3rem);
+  line-height: 1.6;
+}
+
+/* The map keeps the artwork's own 16:9 box, so the flood dots - positioned in
+   percent - stay over the Pacific at every window size. */
+.title-map {
+  flex: 1 1 auto;
+  align-self: stretch;
+  position: relative;
+  container-type: size;
+  overflow: hidden;
+}
+
+.title-map-box {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: max(100cqw, calc(100cqh * 16 / 9));
+  height: max(100cqh, calc(100cqw * 9 / 16));
+}
+
+.title-map-box img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  user-select: none;
+}
+
+.flood-dot {
+  position: absolute;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(67, 97, 238, 0.8) 0%, rgba(67, 97, 238, 0.4) 50%, rgba(67, 97, 238, 0.1) 100%);
+  filter: blur(2px);
+  animation: smallPulse 2s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* The note sits over the map, which is black where the ocean is: black text
+   on it was unreadable. A light panel keeps it legible over both the ocean
+   and the white background. */
+.map-note {
+  position: absolute;
+  top: 5%;
+  right: 2%;
+  width: min(26%, 280px);
+  margin: 0;
+  padding: 0.7em 0.8em;
+  background: rgba(255, 255, 255, 0.88);
+  border-radius: 4px;
+  font-size: clamp(0.65rem, 0.95vw, 0.9rem);
+  line-height: 1.3;
+  color: #000;
+  z-index: 2;
+}
+
+/* Same for the flood legend, which also sits on the dark ocean. */
+.flood-legend {
+  padding: 0.3em 0.5em;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 4px;
+}
+
+.flood-legend {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-size: clamp(0.6rem, 0.85vw, 0.75rem);
+  font-family: 'Helvetica World', Arial, sans-serif;
+  color: #000;
+  z-index: 2;
+}
+
+.flood-legend-dot {
+  border-radius: 50%;
+  background: #0066cc;
+  opacity: 0.8;
+  filter: blur(1px);
+  box-shadow: 0 0 10px rgba(0, 102, 204, 0.5);
+}
+
+.flood-legend--large {
+  top: 72%;
+  left: 74%;
+  transform: translateX(-50%);
+}
+
+.flood-legend--large .flood-legend-dot {
+  width: clamp(28px, 3.5vw, 52px);
+  height: clamp(28px, 3.5vw, 52px);
+}
+
+.flood-legend--small {
+  top: 77%;
+  left: 87%;
+  transform: translateX(-50%);
+}
+
+.flood-legend--small .flood-legend-dot {
+  width: clamp(14px, 1.8vw, 26px);
+  height: clamp(14px, 1.8vw, 26px);
+}
+
+/* Narrow screens: stack the text above the map and drop the hand-drawn
+   annotation lines, which only work next to a wide map. */
+@media (max-width: 900px) {
+  .title-section {
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: clamp(1rem, 3vh, 2rem);
+  }
+
+  .title-text {
+    flex: 0 0 auto;
+    width: 100%;
+  }
+
+  .title-map {
+    flex: 1 1 auto;
+    width: 100%;
+    min-height: 38vh;
+  }
+
+  .title-map-box {
+    width: max(100cqw, calc(100cqh * 16 / 9));
+    height: max(100cqh, calc(100cqw * 9 / 16));
+  }
+
+  .map-note,
+  .flood-legend {
+    display: none;
+  }
+}
+
+/* Category labels under/above the bars. On a phone there is no room for
+   eight country names side by side, so they are tilted instead of
+   overlapping each other. */
+.bar-label {
+  font-size: 12px;
+  line-height: 1.15;
+}
+
+.bar-label > div:last-child {
+  font-size: 11px;
+}
+
+@media (max-width: 700px) {
+  .bar-label {
+    font-size: 9px;
+    transform: rotate(-55deg);
+    transform-origin: center;
+    white-space: nowrap;
+  }
+
+  .bar-label > div:last-child {
+    font-size: 8px;
+    /* rotating shortens the perpendicular gap between the two lines to
+       cos(55deg) of it, so names with descenders (Fiji, Tonga) would touch
+       the value below them */
+    margin-top: 5px;
+  }
+}
+
+/* The hero stage covers the lower 85% of the hero section. It is sized in the
+   same unit as the section itself (dvh), so the artwork is not cut off under
+   a phone browser's address bar. */
+.scene-stage {
+  top: 15vh;
+  top: 15dvh;
+  height: 85vh;
+  height: 85dvh;
+}
+
+/* The glowing circle behind the "Click for story" and "Click for music"
+   buttons. It animates the SVG circle's radius, so it belongs with the rest
+   of the global styles rather than in two inline copies inside page.jsx. */
+@keyframes pulse {
+  0% { r: 36; opacity: 0.7; }
+  50% { r: 48; opacity: 0.2; }
+  100% { r: 36; opacity: 0.7; }
+}
+
+/* Story text sits on a light panel above the dot layer. The panel itself is
+   click-through so a dot underneath stays reachable; links and the charts
+   take pointer events back. */
+.story-text a {
+  pointer-events: auto;
+}
+
+.chart-scaler {
+  pointer-events: auto;
+}
