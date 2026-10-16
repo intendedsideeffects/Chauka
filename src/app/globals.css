@@ -219,6 +219,13 @@ main {
 .title-map {
   flex: 1 1 auto;
   align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.title-map-stage {
+  flex: 1 1 auto;
   position: relative;
   container-type: size;
   overflow: hidden;
@@ -253,71 +260,42 @@ main {
   z-index: 1;
 }
 
-/* The note sits over the map, which is black where the ocean is: black text
-   on it was unreadable. A light panel keeps it legible over both the ocean
-   and the white background. */
-.map-note {
-  position: absolute;
-  top: 5%;
-  right: 2%;
-  width: min(26%, 280px);
-  margin: 0;
-  padding: 0.7em 0.8em;
-  background: rgba(255, 255, 255, 0.88);
-  border-radius: 4px;
-  font-size: clamp(0.65rem, 0.95vw, 0.9rem);
-  line-height: 1.3;
-  color: #000;
-  z-index: 2;
-}
-
-/* Same for the flood legend, which also sits on the dark ocean. */
-.flood-legend {
-  padding: 0.3em 0.5em;
-  background: rgba(255, 255, 255, 0.85);
-  border-radius: 4px;
+/* Flood legend, in a row under the map. No panel behind it: the client wants
+   the type to sit directly on the page. */
+.flood-legend-row {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-end;
+  gap: clamp(1.2rem, 3vw, 2.5rem);
+  padding: 0 clamp(0.5rem, 3vw, 3rem) clamp(0.25rem, 1vh, 0.75rem);
+  flex: 0 0 auto;
 }
 
 .flood-legend {
-  position: absolute;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  font-size: clamp(0.6rem, 0.85vw, 0.75rem);
+  gap: 0.45rem;
+  font-size: clamp(0.62rem, 0.85vw, 0.78rem);
   font-family: 'Helvetica World', Arial, sans-serif;
   color: #000;
-  z-index: 2;
 }
 
 .flood-legend-dot {
   border-radius: 50%;
   background: #0066cc;
-  opacity: 0.8;
-  filter: blur(1px);
-  box-shadow: 0 0 10px rgba(0, 102, 204, 0.5);
-}
-
-.flood-legend--large {
-  top: 72%;
-  left: 74%;
-  transform: translateX(-50%);
+  opacity: 0.85;
+  box-shadow: 0 0 8px rgba(0, 102, 204, 0.45);
 }
 
 .flood-legend--large .flood-legend-dot {
-  width: clamp(28px, 3.5vw, 52px);
-  height: clamp(28px, 3.5vw, 52px);
-}
-
-.flood-legend--small {
-  top: 77%;
-  left: 87%;
-  transform: translateX(-50%);
+  width: clamp(24px, 2.6vw, 38px);
+  height: clamp(24px, 2.6vw, 38px);
 }
 
 .flood-legend--small .flood-legend-dot {
-  width: clamp(14px, 1.8vw, 26px);
-  height: clamp(14px, 1.8vw, 26px);
+  width: clamp(12px, 1.3vw, 19px);
+  height: clamp(12px, 1.3vw, 19px);
 }
 
 /* Narrow screens: stack the text above the map and drop the hand-drawn
@@ -337,7 +315,6 @@ main {
   .title-map {
     flex: 1 1 auto;
     width: 100%;
-    min-height: 38vh;
   }
 
   .title-map-box {
@@ -345,9 +322,8 @@ main {
     height: max(100cqh, calc(100cqw * 9 / 16));
   }
 
-  .map-note,
-  .flood-legend {
-    display: none;
+  .title-map-stage {
+    min-height: 34vh;
   }
 }
 
@@ -399,13 +375,143 @@ main {
   100% { r: 36; opacity: 0.7; }
 }
 
-/* Story text sits on a light panel above the dot layer. The panel itself is
-   click-through so a dot underneath stays reachable; links and the charts
-   take pointer events back. */
-.story-text a {
-  pointer-events: auto;
+
+/* ------------------------------------------------------------------
+   Story dots
+
+   Floods (blue) and acts of resistance (yellow), laid over story sections
+   1-7. They sit ON TOP of the text and the charts on purpose - the floods
+   interrupting the reading is part of the piece - and a hover blows the dot
+   up and draws a thin cross across the page.
+   ------------------------------------------------------------------ */
+.story-dots-layer {
+  position: absolute;
+  inset: 0;
+  /* above the section text column (1000) and the charts (1001/1002) */
+  z-index: 1100;
+  pointer-events: none;
+  overflow: hidden;
 }
 
-.chart-scaler {
+.story-dot {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
   pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.story-dot-core,
+.story-dot-glow {
+  position: absolute;
+  width: var(--dot-size);
+  height: var(--dot-size);
+  border-radius: 50%;
+  background: var(--dot-color);
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.story-dot-core {
+  opacity: 0.8;
+  filter: blur(0.4px);
+}
+
+/* The soft halo around each dot, and the one that swells on hover. */
+.story-dot-glow {
+  opacity: 0.3;
+  transform: scale(1.3);
+  filter: blur(3px);
+}
+
+.story-dot[data-active='true'] .story-dot-core {
+  opacity: 1;
+  transform: scale(var(--dot-grow));
+}
+
+.story-dot[data-active='true'] .story-dot-glow {
+  opacity: 0.5;
+  transform: scale(calc(var(--dot-grow) * 1.15));
+}
+
+.story-dot:focus-visible {
+  outline: 2px solid #0e224f;
+  outline-offset: 2px;
+  border-radius: 50%;
+}
+
+.story-dot-cross {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* The year scale the dots are hung on: a hairline, four marks, no control. */
+.story-timeline {
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  right: clamp(6px, 1.5vw, 22px);
+  width: 1px;
+  background: linear-gradient(
+    to bottom,
+    rgba(14, 34, 79, 0) 0%,
+    rgba(14, 34, 79, 0.18) 8%,
+    rgba(14, 34, 79, 0.18) 92%,
+    rgba(14, 34, 79, 0) 100%
+  );
+}
+
+.story-timeline span {
+  position: absolute;
+  right: 8px;
+  transform: translateY(-50%);
+  font-size: clamp(8px, 0.85vw, 11px);
+  letter-spacing: 0.06em;
+  color: rgba(14, 34, 79, 0.35);
+  font-family: 'Helvetica World', Arial, sans-serif;
+  white-space: nowrap;
+}
+
+/* Tooltip, in the layout the piece started with: white card, black text. */
+.story-tooltip {
+  position: fixed;
+  background: #ffffff;
+  color: #000000;
+  padding: 16px;
+  border-radius: 4px;
+  border: 1px solid #d1d5db;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 16px;
+  line-height: 1.45;
+  overflow-y: auto;
+  z-index: 10001;
+  cursor: pointer;
+}
+
+.story-tooltip-title {
+  font-weight: bold;
+  font-size: 18px;
+  margin: 0 0 8px;
+}
+
+.story-tooltip-sub {
+  font-style: italic;
+  margin: 0 0 8px;
+}
+
+.story-tooltip-body {
+  margin: 8px 0 0;
+  padding-top: 8px;
+  border-top: 1px solid #e5e7eb;
+  white-space: pre-line;
+  line-height: 1.6;
 }

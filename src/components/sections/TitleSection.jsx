@@ -56,38 +56,37 @@ const TitleSection = ({
       </div>
 
       <div className="title-map">
-        <div className="title-map-box">
-          <img src="/spilhaus_black.png" alt="The world's ocean shown as one connected body (Spilhaus projection)" />
+        <div className="title-map-stage">
+          <div className="title-map-box">
+            <img src="/spilhaus_black.png" alt="The world's ocean shown as one connected body (Spilhaus projection)" />
 
-          {DOTS.map((dot, i) => (
-            <span
-              key={i}
-              className="flood-dot"
-              style={{
-                width: `${dot.size}%`,
-                top: dot.top,
-                left: dot.left,
-                animationDelay: dot.delay,
-              }}
-            />
-          ))}
+            {DOTS.map((dot, i) => (
+              <span
+                key={i}
+                className="flood-dot"
+                style={{
+                  width: `${dot.size}%`,
+                  top: dot.top,
+                  left: dot.left,
+                  animationDelay: dot.delay,
+                }}
+              />
+            ))}
 
+          </div>
         </div>
 
-        <p className="map-note">
-          The Spilhaus projection shows the ocean as one connected body, not broken apart like most
-          maps. It helps us see that what happens in one part affects all others. The ocean is the
-          focus, not the background.
-        </p>
-
-        <span className="flood-legend flood-legend--large">
-          <span className="flood-legend-dot" />
-          large flood
-        </span>
-        <span className="flood-legend flood-legend--small">
-          <span className="flood-legend-dot" />
-          small flood
-        </span>
+        {/* Legend under the map, no panel behind it. */}
+        <div className="flood-legend-row">
+          <span className="flood-legend flood-legend--large">
+            <span className="flood-legend-dot" />
+            large flood
+          </span>
+          <span className="flood-legend flood-legend--small">
+            <span className="flood-legend-dot" />
+            small flood
+          </span>
+        </div>
       </div>
     </section>
   );

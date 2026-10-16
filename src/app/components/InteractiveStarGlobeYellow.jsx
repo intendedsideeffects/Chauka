@@ -1,7 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { loadHazardDots, loadResistanceDots } from './storyDotsData';
 
 /**
  * A soft round sprite, drawn once on a canvas.
@@ -26,29 +25,13 @@ function makeDotTexture() {
   return texture;
 }
 
-/**
- * Spread n points evenly over a sphere (Fibonacci lattice). Deterministic, so
- * the sky looks the same on every visit.
- */
-function spherePoint(i, n, radius) {
-  const golden = Math.PI * (3 - Math.sqrt(5));
-  const y = 1 - (i / Math.max(1, n - 1)) * 2;
-  const r = Math.sqrt(Math.max(0, 1 - y * y));
-  const theta = golden * i;
-  return new THREE.Vector3(Math.cos(theta) * r * radius, y * radius, Math.sin(theta) * r * radius);
-}
-
 const InteractiveStarGlobeYellow = ({ onStarsLoaded }) => {
-  const [activeDot, setActiveDot] = useState(null); // { dot, x, y }
   const mountRef = useRef(null);
   const sceneRef = useRef(null);
   const cameraRef = useRef(null);
   const rendererRef = useRef(null);
   const controlsRef = useRef(null);
   const starPointsRef = useRef(null);
-  const dataPointsRef = useRef(null);
-  const dataDotsRef = useRef([]);
-  const pickListenersRef = useRef(null);
 
   useEffect(() => {
     if (!mountRef.current) return;
@@ -376,7 +359,6 @@ const InteractiveStarGlobeYellow = ({ onStarsLoaded }) => {
       const stars = await loadStars();
       if (stars.length > 0) {
         createStarField(stars);
-        addDataStars();
         if (typeof onStarsLoaded === 'function') {
           onStarsLoaded();
         }
@@ -385,118 +367,6 @@ const InteractiveStarGlobeYellow = ({ onStarsLoaded }) => {
         onStarsLoaded();
       }
       
-      // Every hazard and every act of resistance from the story, gathered
-      // into the final sky. Blue for the dangers, yellow for the resistance;
-      // click one to read what it was.
-      async function addDataStars() {
-        try {
-          const [hazards, resistance] = await Promise.all([loadHazardDots(), loadResistanceDots()]);
-          const dots = [...hazards, ...resistance];
-          if (!dots.length || !sceneRef.current) return;
-
-          const positions = new Float32Array(dots.length * 3);
-          const colors = new Float32Array(dots.length * 3);
-          const sizes = new Float32Array(dots.length);
-
-          dots.forEach((dot, i) => {
-            const p = spherePoint(i, dots.length, radius * 0.97);
-            positions[i * 3] = p.x;
-            positions[i * 3 + 1] = p.y;
-            positions[i * 3 + 2] = p.z;
-            const color = new THREE.Color(dot.kind === 'hazard' ? dot.color : '#e3c200');
-            colors[i * 3] = color.r;
-            colors[i * 3 + 1] = color.g;
-            colors[i * 3 + 2] = color.b;
-            sizes[i] = dot.kind === 'hazard' ? 9 + dot.scale * 9 : 26;
-          });
-
-          const geometry = new THREE.BufferGeometry();
-          geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-          geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-          geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
-
-          // Normal blending, not additive: these have to read as themselves
-          // against the pale sky of the final scene.
-          const material = new THREE.ShaderMaterial({
-            uniforms: { pointTexture: { value: makeDotTexture() } },
-            vertexShader: `
-              attribute float size;
-              attribute vec3 color;
-              varying vec3 vColor;
-              void main() {
-                vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-                gl_Position = projectionMatrix * mvPosition;
-                gl_PointSize = size * (130.0 / length(mvPosition.xyz));
-                vColor = color;
-              }
-            `,
-            fragmentShader: `
-              uniform sampler2D pointTexture;
-              varying vec3 vColor;
-              void main() {
-                vec4 tex = texture2D(pointTexture, gl_PointCoord);
-                if (tex.a < 0.05) discard;
-                gl_FragColor = vec4(vColor, tex.a * 0.92);
-              }
-            `,
-            transparent: true,
-            depthWrite: false,
-          });
-
-          const points = new THREE.Points(geometry, material);
-          sceneRef.current.add(points);
-          dataPointsRef.current = points;
-          dataDotsRef.current = dots;
-        } catch (error) {
-          console.warn('Could not add the story dots to the sky:', error);
-        }
-      }
-
-      // Picking: a click (not a drag) on a dot opens its story.
-      const raycaster = new THREE.Raycaster();
-      raycaster.params.Points.threshold = radius * 0.02;
-      const pointer = new THREE.Vector2();
-      let pressedAt = null;
-
-      const pickAt = (clientX, clientY) => {
-        const el = rendererRef.current?.domElement;
-        if (!el || !dataPointsRef.current || !cameraRef.current) return null;
-        const rect = el.getBoundingClientRect();
-        pointer.x = ((clientX - rect.left) / rect.width) * 2 - 1;
-        pointer.y = -((clientY - rect.top) / rect.height) * 2 + 1;
-        raycaster.setFromCamera(pointer, cameraRef.current);
-        const hits = raycaster.intersectObject(dataPointsRef.current);
-        if (!hits.length) return null;
-        return dataDotsRef.current[hits[0].index] ?? null;
-      };
-
-      const onPointerDown = (event) => {
-        pressedAt = { x: event.clientX, y: event.clientY };
-      };
-
-      const onPointerUp = (event) => {
-        if (!pressedAt) return;
-        const moved = Math.hypot(event.clientX - pressedAt.x, event.clientY - pressedAt.y);
-        pressedAt = null;
-        if (moved > 6) return; // that was a drag of the sky, not a click
-        const dot = pickAt(event.clientX, event.clientY);
-        setActiveDot(dot ? { dot, x: event.clientX, y: event.clientY } : null);
-      };
-
-      const onPointerMove = (event) => {
-        const el = rendererRef.current?.domElement;
-        if (!el || pressedAt) return;
-        el.style.cursor = pickAt(event.clientX, event.clientY) ? 'pointer' : 'grab';
-      };
-
-      const canvas = rendererRef.current?.domElement;
-      if (canvas) {
-        canvas.addEventListener('pointerdown', onPointerDown);
-        canvas.addEventListener('pointerup', onPointerUp);
-        canvas.addEventListener('pointermove', onPointerMove);
-        pickListenersRef.current = { canvas, onPointerDown, onPointerUp, onPointerMove };
-      }
-
       // Animation loop
       function animate() {
         if (controlsRef.current) {
@@ -547,88 +417,23 @@ const InteractiveStarGlobeYellow = ({ onStarsLoaded }) => {
           console.warn('Error disposing controls:', error);
         }
       }
-      if (pickListenersRef.current) {
-        const { canvas, onPointerDown, onPointerUp, onPointerMove } = pickListenersRef.current;
-        canvas.removeEventListener('pointerdown', onPointerDown);
-        canvas.removeEventListener('pointerup', onPointerUp);
-        canvas.removeEventListener('pointermove', onPointerMove);
-        pickListenersRef.current = null;
-      }
     };
   }, []);
 
-  const tooltipPosition = () => {
-    if (!activeDot) return {};
-    const width = Math.min(360, window.innerWidth - 32);
-    const maxHeight = Math.min(300, window.innerHeight - 32);
-    let left = activeDot.x + 16;
-    let top = activeDot.y - 40;
-    if (left + width > window.innerWidth - 16) left = Math.max(16, activeDot.x - width - 16);
-    if (top + maxHeight > window.innerHeight - 16) top = window.innerHeight - maxHeight - 16;
-    if (top < 16) top = 16;
-    return { left, top, width, maxHeight };
-  };
-
   return (
-    <>
-      <div
-        ref={mountRef}
-        style={{
-          width: '100%',
-          height: '100%',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          zIndex: 2,
-          cursor: 'grab',
-          overflow: 'hidden',
-        }}
-      />
-
-      {activeDot && (
-        <div
-          role="tooltip"
-          onClick={() => setActiveDot(null)}
-          style={{
-            position: 'fixed',
-            ...tooltipPosition(),
-            overflowY: 'auto',
-            background: 'rgba(255,255,255,0.97)',
-            color: '#0e224f',
-            padding: '14px 16px',
-            borderRadius: '6px',
-            border: '1px solid #d1d5db',
-            boxShadow: '0 10px 20px -6px rgba(0,0,0,0.25)',
-            fontFamily: 'Helvetica World, Arial, sans-serif',
-            fontSize: 'clamp(12px, 1.1vw, 15px)',
-            lineHeight: 1.5,
-            zIndex: 10001,
-            cursor: 'pointer',
-          }}
-        >
-          {activeDot.dot.kind === 'hazard' ? (
-            <>
-              <strong style={{ display: 'block', marginBottom: '4px' }}>
-                {activeDot.dot.type} in {activeDot.dot.country}, {activeDot.dot.year}
-              </strong>
-              {activeDot.dot.summary && <span>{activeDot.dot.summary}</span>}
-              {activeDot.dot.affected > 0 && (
-                <span style={{ display: 'block', marginTop: '6px', color: '#5b6478' }}>
-                  People affected: {activeDot.dot.affected.toLocaleString('en-US')}
-                </span>
-              )}
-            </>
-          ) : (
-            <>
-              <strong style={{ display: 'block', marginBottom: '4px' }}>
-                Resistance, {activeDot.dot.year}
-              </strong>
-              <span>{activeDot.dot.text}</span>
-            </>
-          )}
-        </div>
-      )}
-    </>
+    <div
+      ref={mountRef}
+      style={{
+        width: '100%',
+        height: '100%',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        zIndex: 2,
+        cursor: 'grab',
+        overflow: 'hidden',
+      }}
+    />
   );
 };
 

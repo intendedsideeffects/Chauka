@@ -12,52 +12,50 @@ Danach Terminal neu öffnen. Prüfen mit:
 
     node -v
 
-Da sollte sowas wie v20.x oder v22.x stehen.
 
-
-2) Ordner entpacken
--------------------
-Die ZIP irgendwohin entpacken, wo du sie wiederfindest, z.B. nach
-Dokumente/chauka-projekt
-
-
-3) Im Terminal in den Ordner gehen
-----------------------------------
+2) Ordner entpacken und im Terminal hineingehen
+-----------------------------------------------
 Tipp: "cd " ins Terminal tippen (mit Leerzeichen), dann den Ordner aus
 dem Finder/Explorer ins Terminal ziehen und Enter drücken.
 
     cd /pfad/zu/chauka-projekt
 
 
-4) Einmalig die Pakete installieren
+3) Einmalig die Pakete installieren
 -----------------------------------
     npm install
 
-Dauert beim ersten Mal ein paar Minuten und lädt ca. 500 MB in den
-Unterordner node_modules. Das ist normal.
+Dauert beim ersten Mal ein paar Minuten.
 
 
-5) Seite starten
+4) Seite starten
 ----------------
     npm run dev
 
 Dann im Browser öffnen:  http://localhost:3000
+Beenden: im Terminal Strg + C (Mac: Control + C).
 
-Beenden: im Terminal Strg + C (auf dem Mac: Control + C).
+
+In dieser Version umgesetzt (dein Feedback-PDF)
+-----------------------------------------------
+* Play-Button sitzt jetzt mittig auf dem Vogelkörper.
+* Spilhaus-Text gelöscht, Legende unter der Karte ohne weißen Hintergrund.
+* Keine weißen Flächen mehr hinter der Schrift – "LEVEL (CM)" wird nicht
+  mehr abgeschnitten.
+* Punkte: nur noch Fluten (blau) und Acts of Resistance (gelb), wieder in
+  den ursprünglichen Größen, verteilt über die ganze Breite – auch über
+  Text und Chart.
+* Hover ist wieder stark: Punkt wird groß, großes Hoverkreuz, und das
+  Tooltip-Layout von früher (schwarze Schrift, "Start year", Trennlinie).
+* Sternenhimmel: Punkte wieder organisch verteilt statt im Raster, und
+  beim Ziehen bewegt sich nur der Sternenhintergrund, nicht die Punkte.
+* Handy: keine gemusterten Kugeln mehr, Punkte liegen auf dem Text.
 
 
-Was noch gut zu wissen ist
---------------------------
-* Änderungen an Dateien im Ordner "src" siehst du sofort im Browser,
-  Seite muss nur kurz neu laden.
+Wo die Daten liegen
+-------------------
+    public/Disaster_Dataset_with_Summaries_fixed.csv   (blaue Punkte, Fluten)
+    public/Climate_Resistance_Tooltips.csv             (gelbe Punkte)
 
-* "npm run build" baut die Seite genauso, wie Vercel sie baut. Wenn das
-  ohne Fehler durchläuft, würde auch ein Deploy durchlaufen.
-
-* Die blauen und gelben Punkte kommen aus zwei Dateien im Ordner public:
-      public/Disaster_Dataset_with_Summaries_fixed.csv   (blaue Punkte)
-      public/Climate_Resistance_Tooltips.csv             (gelbe Punkte)
-  Wenn du dort Zeilen änderst oder ergänzt, ändern sich die Punkte.
-  Es gibt keine Datenbank mehr, an der etwas kaputtgehen kann.
-
-* Mehr zum Aufbau steht in der README.md (auf Englisch).
+Zeilen ändern oder ergänzen = Punkte ändern sich. Keine Datenbank nötig.
+Mehr zum Aufbau steht in der README.md (auf Englisch).

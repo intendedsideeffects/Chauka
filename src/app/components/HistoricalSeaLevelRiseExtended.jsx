@@ -156,17 +156,6 @@ const HistoricalSeaLevelRiseExtended = () => {
         border: 'none',
         outline: 'none'
       }}>
-        {/* White box to cover top line */}
-        <div style={{
-          position: 'absolute',
-          top: '18px',
-          left: '0px',
-          right: '0px',
-          height: '3px',
-          backgroundColor: 'white',
-          zIndex: 10
-        }} />
-        
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={data.allData} margin={{ left: 0, right: 0, top: 20, bottom: 20 }}>
                          <defs>

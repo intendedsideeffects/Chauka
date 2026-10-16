@@ -156,10 +156,11 @@ export default function ChaukaStory() {
             </div>
 
             {/* Bird audio hotspot - stays on the bird at every screen size.
-                20.5% / 30.5% is where the Chauka sits inside scene.png. */}
+                20.6% / 28.8% is the centre of the Chauka's body inside
+                scene.png, measured from the artwork itself. */}
             <div
               className="scene-hotspot"
-              style={{ left: '20.5%', top: '30.5%', zIndex: 6 }}
+              style={{ left: '20.6%', top: '28.8%', zIndex: 6 }}
             >
               <BirdAudioPlayer />
             </div>
@@ -318,11 +319,11 @@ export default function ChaukaStory() {
         <TitleSection />
       </div>
 
-      {/* Story sections 1-6.
+      {/* Story sections 1-7.
 
           The dot layer is a child of this wrapper rather than a box placed at
-          a fixed pixel offset, so it covers exactly these six sections and
-          ends where section 7 (the star sky) starts - on every screen size. */}
+          a fixed pixel offset, so it covers exactly these sections and ends
+          with the night sky of section 7 - on every screen size. */}
       <div style={{ position: 'relative' }}>
         <StoryDots />
 
@@ -515,8 +516,6 @@ This is not only a story of loss. It is also one of <strong>resilience</strong>.
 
 
 
-
-      </div>
 
        {/* Final Section - Custom styled without chart */}
        <div style={{position: 'relative'}}>
@@ -775,6 +774,8 @@ This is not only a story of loss. It is also one of <strong>resilience</strong>.
              
 
          </section>
+      </div>
+
       </div>
 
       {/* Section 11 - Material and Method */}

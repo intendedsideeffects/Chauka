@@ -88,30 +88,24 @@ const SegmentTemplate = ({
     position: 'relative',
   };
 
-  // A light panel behind the words: the dot layer drifts underneath the text,
-  // and on a narrow screen it runs right across it, so the text needs its own
-  // ground to stay readable. pointerEvents: none lets a click reach a dot
-  // that sits under the panel; links opt back in (see .story-text a).
+  // No panel behind the words: the dots are meant to drift over the text, and
+  // a white ground behind it both hid them and clipped the type.
   const textColumn = {
     width: '100%',
     maxWidth: '800px',
     textAlign: 'left',
     margin: '0 auto',
-    background: 'rgba(255, 255, 255, 0.82)',
-    borderRadius: '6px',
-    padding: 'clamp(0.4rem, 1vw, 0.9rem) clamp(0.5rem, 1.2vw, 1.1rem)',
-    pointerEvents: 'none',
   };
 
   return (
     <section style={merged.container}>
       <div style={column}>
-        <div className="story-text" style={textColumn}>
+        <div style={textColumn}>
           <h2 style={merged.header}>{header}</h2>
           {headerSecondLine && <h3 style={merged.headerSecondLine}>{headerSecondLine}</h3>}
         </div>
 
-        <div className="story-text" style={textColumn}>
+        <div style={textColumn}>
           <p style={merged.text} dangerouslySetInnerHTML={{ __html: text }} />
         </div>
 
@@ -132,7 +126,7 @@ const SegmentTemplate = ({
         )}
 
         {caption && (
-          <div className="story-text" style={textColumn}>
+          <div style={textColumn}>
             <p style={merged.caption} dangerouslySetInnerHTML={{ __html: caption }} />
           </div>
         )}
